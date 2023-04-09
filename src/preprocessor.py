@@ -2,7 +2,8 @@
 from sklearn.compose import ColumnTransformer, make_column_transformer
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
 
-numeric_feature = [
+
+numeric_features = [
     "Log CO2 Emissions(g/km)",
     "Log Engine Size(L)",
     "Log Fuel Consumption(Hwy (L/100 km))",
@@ -25,7 +26,7 @@ target = "Smog Rating"
 
 def preprocesser():
     p = make_column_transformer(
-        (StandardScaler(), numeric_feature),
+        (StandardScaler(), numeric_features),
         (OneHotEncoder(drop="if_binary"), binary_features),
         (OneHotEncoder(handle_unknown="ignore"), categorical_features))
     return p

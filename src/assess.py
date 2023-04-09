@@ -16,12 +16,13 @@ from sklearn.metrics import roc_curve, RocCurveDisplay, auc
 from itertools import cycle
 from sklearn.preprocessing import LabelBinarizer
 
+state = 123
 
 def mean_std_cross_val_scores(model, X_train, y_train, **kwargs):
     """
     Returns mean and std of cross validation
     """
-    folds = StratifiedKFold(n_splits=5,random_state=123,shuffle=True)
+    folds = StratifiedKFold(n_splits=5,random_state=state,shuffle=True)
     scores = cross_validate(model, X_train, y_train, **kwargs, cv=folds)
 
     mean_scores = pd.DataFrame(scores).mean()
@@ -169,7 +170,7 @@ def cv_predict_interval(model, X_train, y_train, **kwargs):
     Returns mean and std of cross validation
     """
     
-    folds = StratifiedKFold(n_splits=5,random_state=123,shuffle=True)
+    folds = StratifiedKFold(n_splits=5,random_state=state,shuffle=True)
     scores = cross_val_predict(model, X_train, y_train, **kwargs, cv=folds,method='predict_proba')
     probs = [scores[j] for i, j in folds.split(X_train,y_train)]
     y_train_new = y_train.values
