@@ -18,6 +18,15 @@ from sklearn.preprocessing import LabelBinarizer
 
 state = 123
 
+# ' Calculate the five-fold cross-validation training and testing accuracies as well as the 
+# ' possible range by mean and sd.
+# '
+# ' @param model: the Scikit-learn model or pipelie.
+# ' @param X_train: X data in training set
+# ' @param y_train: target values in training set
+# ' @param **kwargs: any other parameters that can pass to the cross-validate function.
+# '
+# ' @return return a pandas Series containing the cross-validation results.
 def mean_std_cross_val_scores(model, X_train, y_train, **kwargs):
     """
     Returns mean and std of cross validation
@@ -35,14 +44,15 @@ def mean_std_cross_val_scores(model, X_train, y_train, **kwargs):
     return pd.Series(data=out_col, index=mean_scores.index)
 
 
-# calculate the misclassification rate of 50% prediction interval and 80% prediction interval
-# please double-check with its results, thx!
-# as for previous code format, I'll reformat them when I got time (after my midterm perhaps, sorry for that)
-
+# ' calculate the 50% and 80% prediction interval.
+# '
+# ' @param ProbMatrix: The output prediction probability matrix by models.
+# ' @param label: All classes in the response variable, default ascending order
+# '
+# ' @return Return a dictionary containing the prediction interval of 50% and 80% prediction intervals.
 
 def CategoryPredInterval(ProbMatrix, labels):
     ncases = ProbMatrix.shape[0]
-    # print(ProbMatrix)
     pred50 = np.empty(ncases, dtype=object)
     pred80 = np.empty(ncases, dtype=object)
 
@@ -51,18 +61,13 @@ def CategoryPredInterval(ProbMatrix, labels):
         ip = np.argsort(-p)
         pOrdered = p[ip]
         labelsOrdered = np.array(labels)[ip]
-        # print(pOrdered)
-        # print(labelsOrdered)
 
         G = np.cumsum(pOrdered)
         k1 = min([k for k in range(len(G)) if G[k] >= 0.5])
         k2 = min([k for k in range(len(G)) if G[k] >= 0.8])
-        # print(G)
 
         pred1 = labelsOrdered[:k1+1].astype(str)
         pred2 = labelsOrdered[:k2+1].astype(str)
-        # print(pred1)
-        # print(pred2)
 
         pred50[i] = "".join(pred1)
         pred80[i] = "".join(pred2)
@@ -70,8 +75,14 @@ def CategoryPredInterval(ProbMatrix, labels):
     return {'pred50': pred50, 'pred80': pred80}
 
 
+# ' calculate the misclassification rate of 50% prediction interval and 80% prediction interval
+# '
+# ' @param pred_model: The predicted probability matrix by the model.
+# ' @param y_test: Target calsses in the testing set.
+# '
+# ' @return Return a dictionary containing the misclassification rates based on prediction interval
+# ' in 50% and 80% levels, and rates for each class.
 def calc_misclass_rate_pred_interval(pred_model, y_test):
-    # n_total = pred_model.shape[0]
     res = CategoryPredInterval(pred_model, np.sort(y_test.unique()))
     res = pd.DataFrame(res)
 
@@ -114,6 +125,12 @@ def calc_misclass_rate_pred_interval(pred_model, y_test):
     return {"pred50": pred50, "pred80": pred80, "class_pred50":category_misrate_dict50, "class_pred80":category_misrate_dict80,}
 
 
+# ' Generate the confusion matrix for multi-nomial classification.
+# '
+# ' @param pred_model: The predicted probability matrix by the model.
+# ' @param y_test: Target calsses in the testing set.
+# '
+# ' @return Return a table format confusion matrix.
 def categoryPredMatrix(predModel, y_test):
     pred_df50 = pd.DataFrame()
     pred_df50['Smog Rating'] = y_test
@@ -139,9 +156,14 @@ def categoryPredMatrix(predModel, y_test):
     return table
 
 
-## Function for cross-validation missclassification rate
-
-
+# ' Helper function to calculate the misclassification rate of 50% prediction interval and 80% prediction interval
+# ' for each cross-validation fold.
+# '
+# ' @param pred_model: The predicted probability matrix by the model.
+# ' @param y_train_cv: Target calsses in the training set.
+# '
+# ' @return Return a dictionary containing the misclassification rates based on prediction interval
+# ' in 50% and 80% levels for each cross-validation fold.
 def calc_misclass_rate_pred_interval_cv(pred_model,y_train_cv):
     y_train_cv = pd.Series(y_train_cv)
     n_total = pred_model.shape[0]
@@ -165,10 +187,15 @@ def calc_misclass_rate_pred_interval_cv(pred_model,y_train_cv):
     return {"pred50": round(1-pred50, 4), "pred80": round(1-pred80, 4)}
 
 
+# ' calculate the misclassification rates for each cross validation.
+# '
+# ' @param pred_model: The predicted probability matrix by the model.
+# ' @param X_train: The X data in the training set.
+# ' @param y_train: The target values in the training set.
+# ' @param **kwargs: any other parameters that can pass to the cross-validate function.
+# '
+# ' @return Return a list containing misclassification rates in each fold.
 def cv_predict_interval(model, X_train, y_train, **kwargs):
-    """
-    Returns mean and std of cross validation
-    """
     
     folds = StratifiedKFold(n_splits=5,random_state=state,shuffle=True)
     scores = cross_val_predict(model, X_train, y_train, **kwargs, cv=folds,method='predict_proba')
@@ -177,13 +204,16 @@ def cv_predict_interval(model, X_train, y_train, **kwargs):
     cv_ytrain = [y_train_new[j] for i,j in folds.split(X_train,y_train)]
     cv_pi = []
     for i in range(0, len(probs)):
-        # pi = CategoryPredInterval(probs[i-1],np.sort(y_train.unique()))
         rate = calc_misclass_rate_pred_interval_cv(probs[i],cv_ytrain[i])
         cv_pi.append(rate)
-        # print(rate)
     return cv_pi
 
 
+# ' calculate the mean cross-validation misclassification rates.
+# '
+# ' @param array: The list containing cross-validation rates.
+# '
+# ' @return Return a dictionary containing mean values of cross-validation rates.
 def get_mean_cv(array):
     preds_50 = []
     preds_80 = []
@@ -199,6 +229,15 @@ def get_mean_cv(array):
 
 
 
+# ' Draw the ROC curve, and calculate the AUC scores.
+# ' Reference: https://scikit-learn.org/stable/auto_examples/model_selection/plot_roc.html
+# '
+# ' @param model: The fitted pipeline or model.
+# ' @param X_test: The X data in the testing set.
+# ' @param y_train: The target values in the training set.
+# ' @param y_test: The target values in the testing set.
+# '
+# ' @return Return a list containing AUC score for each class.
 def auc_drawer(model, X_test, y_train, y_test):
   n_classes = len(np.unique(y_test))
   y_score = model.predict_proba(X_test)
@@ -264,6 +303,15 @@ def auc_drawer(model, X_test, y_train, y_test):
   return auc_list;
 
 
+# ' Format the result table by testing results
+# '
+# ' @param dict: The dictionary of misclassification rates for each class.
+# ' @param cmlist: The general confusion matrix in a list.
+# ' @param acc: The test accuracy of the model.
+# ' @param auclist: The list of AUC of each class.
+# ' @param auc: The overall auc score.
+# '
+# ' @return Return a data frame of the results above.
 def get_test_result_table(dict, cmlist,acc, auclist, auc):
 
     df = pd.DataFrame(dict).T
@@ -280,6 +328,15 @@ def get_test_result_table(dict, cmlist,acc, auclist, auc):
     return df.round(3)
 
 
+
+# ' Format the result table by cross-validation results.
+# '
+# ' @param fold: The dictionary of misclassification rates for each cross-validation fold.
+# ' @param mean_dict: The mean cross-validation rate..
+# ' @param test: The validation accuracy.
+# ' @param train: The training accuracy.
+# '
+# ' @return Return a data frame of the results above.
 def cv_result_table(fold_dict, mean_dict, test, train):
     df = pd.DataFrame(fold_dict).round(3).T
     df.columns = ['1','2','3','4','5']

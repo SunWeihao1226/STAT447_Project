@@ -6,6 +6,11 @@ from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
 
 state = 123
 
+# ' Split the dataset into X, y training and testing sets.
+# '
+# ' @param df: The original dataframe.
+# '
+# ' @return Return X, y training and testing sets.
 def split(df):
     train_df, test_df = train_test_split(df, test_size=0.3, random_state=state)
     X_train = train_df.drop(columns=["Smog Rating", 

@@ -86,6 +86,12 @@ encoding_name_list = [
 'onehotencoder-2__Fuel Type_L']
 
 
+# ' Add the interaction to X and y training set and performe encodings.
+# '
+# ' @param X_train: The X_train set.
+# ' @param X_test: The X_test set.
+# '
+# ' @return Return a list containing transformed training and testing set.
 def make_interaction_set(X_train, X_test):
   X_train = pd.DataFrame(X_train)
   X_test = pd.DataFrame(X_test)

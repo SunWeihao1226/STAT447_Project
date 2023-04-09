@@ -1,6 +1,15 @@
 import numpy as np
 import math
 
+
+# ' Goodman-Kruskal tau (scale is like multiple R^2, 
+# '    take sqrt to match correlation scale)
+# ' Reference: Code file provided by Professor Joe
+# ' 
+# ' @param ntab: two-way table of proportions or counts response variable in column
+# ' @param ipror: If the value in the table is a proportion
+# '
+# ' @return dependent measure for row nominal variable to predict column
 def GKtau(ntab, iprop=True):
     if not iprop:
         nn = ntab.values.sum()

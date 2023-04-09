@@ -24,15 +24,12 @@ categorical_features = [
 target = "Smog Rating"
 
 
+# ' Make the prepcocessor.
+# '
+# ' @return Return a preprocessor integrating transformers and encoders.
 def preprocesser():
     p = make_column_transformer(
         (StandardScaler(), numeric_features),
         (OneHotEncoder(drop="if_binary"), binary_features),
         (OneHotEncoder(handle_unknown="ignore"), categorical_features))
     return p
-
-# X_train_transformed = preprocessor.fit_transform(X_train)
-# X_test_transformed = preprocessor.transform(X_test)
-
-# X_train_df = pd.DataFrame(X_train_transformed.toarray())
-# X_test_df = pd.DataFrame(X_test_transformed.toarray())
